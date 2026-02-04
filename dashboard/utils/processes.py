@@ -71,19 +71,29 @@ class DashboardProcesses:
         
         return df[df['neighbourhood_id'] == ward_id]
     
-    def filter_hosts_by_ward(self, df, ward_hosts, option=None):
+    def filter_hosts_by_ward(self, df, listings_info, option=None):
         """Filter hosts dataframe to include only hosts from selected ward.
         
         Args:
             df: pandas DataFrame containing host data
-            ward_hosts: array-like, host IDs to filter by
+            listings_info: pandas DataFrame containing listings information
             option: str or None, ward selection (used to determine if filtering should occur)
             
         Returns:
             pandas DataFrame: filtered or original hosts dataframe
         """
-        if not option or df.empty or len(ward_hosts) == 0:
+        # If no ward is selected or dataframe is empty, return all hosts
+        if not option or df.empty:
             return df
+        
+        # Extract host IDs from the filtered listings
+        ward_hosts = listings_info['host_id'].unique()
+        
+        # If no hosts found in the ward, return empty dataframe with same structure
+        if len(ward_hosts) == 0:
+            return df[df['host_id'].isin([])]
+        
+        # Filter hosts to only those with listings in the selected ward
         return df[df['host_id'].isin(ward_hosts)]
 
     
@@ -122,6 +132,18 @@ class DashboardProcesses:
         
         return metrics
     
+
+    def get_global_listing_metrics(self, df):
+        """Calculate global listing metrics across all wards.
+        
+        Args:
+            df: pandas DataFrame containing listing data       
+        Returns:
+            dict: global listing metrics
+        """
+        return self.get_metrics_for_ward_listings(df)
+    
+
     def get_metrics_for_ward_hosts(self, df):
         """Calculate key metrics for hosts in the selected ward.
         
@@ -140,34 +162,47 @@ class DashboardProcesses:
                 'verified_hosts_percent': 0.0
             }
         
-        total_hosts = df['host_id'].nunique()
-        mean_response_rate = df['host_response_rate'].mean() if 'host_response_rate' in df.columns else 0.0
-        mean_acceptance_rate = df['host_acceptance_rate'].mean() if 'host_acceptance_rate' in df.columns else 0.0
+        else:
+            total_hosts = df['host_id'].nunique()
+            mean_response_rate = df['host_response_rate'].mean() if 'host_response_rate' in df.columns else 0.0
+            mean_acceptance_rate = df['host_acceptance_rate'].mean() if 'host_acceptance_rate' in df.columns else 0.0
 
-        num_superhosts = df['host_is_superhost'].sum() if 'host_is_superhost' in df.columns else 0
-        print("Number of superhosts:", num_superhosts)
-        percent_superhosts = (num_superhosts / total_hosts) * 100
-        print("Percent superhosts:", percent_superhosts)
+            num_superhosts = df['host_is_superhost'].sum() if 'host_is_superhost' in df.columns else 0
+            #print("Number of superhosts:", num_superhosts)
+            percent_superhosts = (num_superhosts / total_hosts) * 100
+            #print("Percent superhosts:", percent_superhosts)
+            
+            num_verified_hosts = df['host_identity_verified'].sum() if 'host_identity_verified' in df.columns else 0
+            #print("Number of verified hosts:", num_verified_hosts)
+            percent_verified_hosts = (num_verified_hosts / total_hosts) * 100
+            #print("Percent verified hosts:", percent_verified_hosts)
+
+            # Calculate percentages
+            #super_hosts_percent = su
+
+            metrics = {
+                'total_hosts': total_hosts,
+                'mean_response_rate': mean_response_rate,
+                'mean_acceptance_rate': mean_acceptance_rate,
+                'super_hosts_count': num_superhosts,
+                'verified_hosts_count': num_verified_hosts,
+                'super_hosts_percent': percent_superhosts,
+                'verified_hosts_percent': percent_verified_hosts
+            }
+
+            return metrics
         
-        num_verified_hosts = df['host_identity_verified'].sum() if 'host_identity_verified' in df.columns else 0
-        print("Number of verified hosts:", num_verified_hosts)
-        percent_verified_hosts = (num_verified_hosts / total_hosts) * 100
-        print("Percent verified hosts:", percent_verified_hosts)
-
-        # Calculate percentages
-        #super_hosts_percent = su
-
-        metrics = {
-            'total_hosts': total_hosts,
-            'mean_response_rate': mean_response_rate,
-            'mean_acceptance_rate': mean_acceptance_rate,
-            'super_hosts_count': num_superhosts,
-            'verified_hosts_count': num_verified_hosts,
-            'super_hosts_percent': percent_superhosts,
-            'verified_hosts_percent': percent_verified_hosts
-        }
-
-        return metrics
+      # Alias for global host metrics
+    def get_global_host_metrics(self, df):
+        """Alias for get_metrics_for_ward_hosts to calculate global host metrics.
+        
+        Args:
+            df: pandas DataFrame containing host data
+            
+        Returns:
+            dict: global host metrics
+        """
+        return self.get_metrics_for_ward_hosts(df)
 
     def get_data_table(self, df):
         """Generate summary table of listings grouped by neighbourhood.
@@ -201,4 +236,9 @@ class DashboardProcesses:
         
         table.index.name = "Ward"
         table.columns = ["Price (ZAR)", "Average Rating (Stars)", "Total Listings"]
+        
+        # Format numeric columns
+        table["Price (ZAR)"] = table["Price (ZAR)"].apply(lambda x: f"{x:.2f}")
+        table["Average Rating (Stars)"] = table["Average Rating (Stars)"].apply(lambda x: f"{x:.1f}")
+        
         return table
