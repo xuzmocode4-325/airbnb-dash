@@ -45,25 +45,24 @@ host_deltas = hosts_helper.get_host_metrics_deltas()
 
 st.sidebar.divider()
 if option:
-    st.sidebar.markdown(f"### Ward {option} Summary")
+    st.sidebar.markdown(f"### {option} Summary")
 else:
     st.sidebar.markdown("### Cape Town Summary")
-st.sidebar.markdown(f"Longitude: :blue-background[:blue[{longitude:.5f}]]")
-st.sidebar.markdown(f"Latitude: :blue-background[:blue[{latitude:.5f}]]")
-st.sidebar.markdown(f"Total Hosts: :blue-background[:blue[{listing_metrics['total_hosts']}]]")
-st.sidebar.markdown(f"Total Listings: :blue-background[:blue[{listing_metrics['total_listings']}]]")
-st.sidebar.markdown(f"Lowest Rating: :blue-background[:red[{listing_metrics['min_rating']: .2f} stars]]")
-st.sidebar.markdown(f"Highest Rating: :blue-background[:green[{listing_metrics['max_rating']: .2f} stars]]")
-st.sidebar.markdown(f"Average Price: :blue-background[:yellow[ZAR {listing_metrics['average_price']: .2f} per night]]")
+st.sidebar.markdown(f"Longitude: :blue-background[{longitude:.5f}]")
+st.sidebar.markdown(f"Latitude: :blue-background[{latitude:.5f}]")
+st.sidebar.markdown(f"Total Hosts: :blue-background[{listing_metrics['total_hosts']}]")
+st.sidebar.markdown(f"Total Listings: :blue-background[{listing_metrics['total_listings']}]")
+st.sidebar.markdown(f"Lowest Rating: :blue-background[:red[{listing_metrics['min_rating']: .1f} stars]]")
+st.sidebar.markdown(f"Highest Rating: :blue-background[:green[{listing_metrics['max_rating']: .1f} stars]]")
 st.space(size="small")
 st.sidebar.divider()
 st.sidebar.markdown("### About this Dashboard")
 st.sidebar.markdown("This is a dashboard that displays Airbnb listings in Cape Town, South Africa. The data is sourced from [Inside Airbnb](http://insideairbnb.com/get-the-data.html) and is updated monthly.")    
 
-st.markdown("## Airbnb Listings in Cape Town by Ward")
+st.markdown("## Airbnb Listings Analysis for Cape Town, South Africa")
 st.markdown("### Overall Metrics")
 
-with st.expander("Listings Metrics", expanded=False):
+with st.expander("Price Metrics", expanded=False):
     st.markdown(
         """
         Key Airbnb metrics for selected ward vs Cape Town overall:
@@ -86,11 +85,30 @@ with st.expander("Listings Metrics", expanded=False):
         f"ZAR {listing_metrics['average_price']:.2f}",
         f"{listing_deltas['average_price_delta']:.2f} ZAR")
     col4.metric(
-        "Average Rating", f"{
-        listing_metrics['average_rating']:.2f} star(s)",
+        "Average Rating", 
+        f"{listing_metrics['average_rating']:.1f} star(s)",
         f"{listing_deltas['average_rating_delta']:.1f} star(s)" 
         )
    
+
+with st.expander("Occupancy & Revenue Metrics", expanded=False):  
+    st.markdown(
+        """
+        Key Airbnb occupancy and revenue metrics for selected ward vs Cape Town overall:
+        - **Avg. Occupancy Rate** (with Cape Town difference)
+        - **Avg. Monthly Revenue** (with Cape Town difference)  
+        """
+    )   
+    col1, col2 = st.columns(2)
+    col1.metric(
+        "Average Occupancy Rate", 
+        f"{listing_metrics['average_occupancy']:.2f}%",
+        f"{listing_deltas['average_occupancy_delta']:.2f}%")
+    col2.metric(
+        "Average Monthly Revenue", 
+        f"ZAR {listing_metrics['average_revenue']:.2f}",
+        f"{listing_deltas['average_revenue_delta']:.2f}"
+    )
 
 # Display host metrics
 with st.expander("Host Metrics", expanded=False):
@@ -123,7 +141,19 @@ with st.expander("Host Metrics", expanded=False):
         f"{host_deltas['super_hosts_percent_delta']:.2f}%"
     )
 
-st.divider()
+# Display listing type breakdown
+with st.expander("Listings & Room Type Breakdown", expanded=False):
+    st.markdown(
+        """
+        Sunburst chart showing Airbnb listings by room type and property type.
+        - **Size**: Number of listings per category
+        - **Color**: Average estimated revenue per listing (Viridis scale)
+        """
+    )
+    fig = listings_helper.show_sunburst_chart()
+    st.plotly_chart(fig, use_container_width=True)
+
+
 with st.container():
     col1, col2 = st.columns([45, 55], vertical_alignment="center")
     n=folium.Map(location=[latitude, longitude], zoom_start=zoom)

@@ -326,4 +326,9 @@ class NormaliseListings:
         listings_df.rename(columns={'price': 'price_usd'}, inplace=True)
         listings_df['price_usd'] = listings_df['price_usd'].str.replace('$', '').str.replace(',', '').astype('Float64')
         listings_df['listing_id'] = listings_df['listing_id'].astype(int)
+        listings_df['room_type'] = listings_df['room_type'].str.replace('home/apt', 'residence')
+        listings_df['property_type'] = listings_df['property_type'].str.replace('Entire', '')
+        listings_df['property_type'] = listings_df['property_type'].str.replace('Private', '')
+        listings_df['property_type'] = listings_df['property_type'].str.lower().str.strip().astype('category')
+        listings_df['room_type'] = listings_df['room_type'].str.lower().str.strip().astype('category')
         return listings_df

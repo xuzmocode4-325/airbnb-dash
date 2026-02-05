@@ -1,5 +1,6 @@
 import re
 import pandas as pd
+import plotly.express as px
 
 
 class DashboardProcesses:
@@ -115,21 +116,36 @@ class DashboardProcesses:
                 'min_price': 0.0,
                 'max_price': 0.0,
                 'min_rating': 0.0,
-                'max_rating': 0.0
+                'max_rating': 0.0,
+                'average_occupancy': 0.0,
+                'average_revenue': 0.0
             }
         
-        # Calculate metrics, using 0 as default for missing values
-        metrics = {
-            'min_price': df['price_usd'].min() if not df['price_usd'].isna().all() else 0.0,
-            'max_price': df['price_usd'].max() if not df['price_usd'].isna().all() else 0.0,
-            'min_rating': df['review_scores_rating'].min() if not df['review_scores_rating'].isna().all() else 0.0,
-            'max_rating': df['review_scores_rating'].max() if not df['review_scores_rating'].isna().all() else 0.0,
-            'average_price': df['price_usd'].mean() if not df['price_usd'].isna().all() else 0.0,
-            'average_rating': df['review_scores_rating'].mean() if not df['review_scores_rating'].isna().all() else 0.0,
-            'total_hosts': df['host_id'].nunique(),
-            'total_listings': len(df)
-        }
-        
+        else:
+            # Calculate metrics, using 0 as default for missing values
+            min_price = df['price_usd'].min() if not df['price_usd'].isna().all() else 0.0
+            max_price = df['price_usd'].max() if not df['price_usd'].isna().all() else 0.0
+            min_rating = df['review_scores_rating'].min() if not df['review_scores_rating'].isna().all() else 0.0
+            max_rating = df['review_scores_rating'].max() if not df['review_scores_rating'].isna().all() else 0.0   
+            average_price = df['price_usd'].mean() if not df['price_usd'].isna().all() else 0.0
+            average_rating = df['review_scores_rating'].mean() if not df['review_scores_rating'].isna().all() else 0.0
+            total_hosts = df['host_id'].nunique()
+            total_listings = len(df)
+            average_occupancy = df['estimated_occupancy_l365d'].mean() if not df['estimated_occupancy_l365d'].isna().all() else 0.0
+            average_revenue = (df['estimated_revenue_l365d'].mean() / 12) if not df['estimated_revenue_l365d'].isna().all() else 0.0
+           
+            metrics = {
+                'min_price': min_price,
+                'max_price': max_price,
+                'min_rating': min_rating,
+                'max_rating': max_rating,
+                'average_price': average_price,
+                'average_occupancy': average_occupancy,
+                'average_revenue': average_revenue,
+                'average_rating': average_rating,
+                'total_hosts': total_hosts,
+                'total_listings': total_listings
+            }
         return metrics
     
 
@@ -237,8 +253,49 @@ class DashboardProcesses:
         table.index.name = "Ward"
         table.columns = ["Price (ZAR)", "Average Rating (Stars)", "Total Listings"]
         
-        # Format numeric columns
-        table["Price (ZAR)"] = table["Price (ZAR)"].apply(lambda x: f"{x:.2f}")
+        # Round numeric columns to specified decimal places
+        table["Price (ZAR)"] = table["Price (ZAR)"].round(2)
         table["Average Rating (Stars)"] = table["Average Rating (Stars)"].apply(lambda x: f"{x:.1f}")
         
         return table
+
+
+    def make_sunburst_chart(self, df):
+        """Display sunburst chart of listings by room and property type.
+        
+        Args:
+            df: pandas DataFrame containing listings with ratings
+        """
+
+        sunburst_data = df.groupby(['room_type', 'property_type']).agg({
+            'listing_id': 'count',
+            'estimated_revenue_l365d': 'mean'
+        }).sort_values('listing_id', ascending=False).reset_index().rename(columns={
+            'listing_id': 'count',
+            'estimated_revenue_l365d': 'mean_revenue'
+        })
+        
+        
+        fig = px.treemap(
+            sunburst_data,
+            path=[px.Constant("listings"), 'room_type', 'property_type'],
+            values='count',
+            color='mean_revenue',
+            color_continuous_scale='Viridis'
+        )
+
+        fig.update_layout(
+            height=700,
+            paper_bgcolor='#0D1116',
+            plot_bgcolor='#0D1116',
+            font=dict(color='white', size=14),
+            margin=dict(t=50, l=50, r=50, b=50)
+        )
+
+        fig.update_traces(
+            marker=dict(
+                line=dict(width=0)  # Remove all borders
+            )
+        )
+
+        return fig

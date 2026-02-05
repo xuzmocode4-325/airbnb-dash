@@ -51,25 +51,36 @@ class ListingsHelper(UIHelper):
     def get_listing_metrics(self):
         filtered_listings = self.get_filtered_listings()
         return self.processes.get_metrics_for_ward_listings(filtered_listings)
+
+    # Show sunburst chart in UI
+    def show_sunburst_chart(self):
+        filtered_listings = self.get_filtered_listings()
+        return self.processes.make_sunburst_chart(filtered_listings)
     
+    # Global metrics for listings used in delta calculations
     def get_global_listing_metrics(self):
         rated_listings = self.load_rated_listings()
         return self.processes.get_global_listing_metrics(rated_listings)
     
+    # Delta calculations for listing metrics
     def get_listing_metrics_deltas(self):
         filtered_listing_metrics = self.get_listing_metrics()
         global_listing_metrics = self.get_global_listing_metrics()
 
-        delta_min_price =  filtered_listing_metrics['min_price'] - global_listing_metrics['min_price']
-        delta_max_price = filtered_listing_metrics['max_price'] - global_listing_metrics['max_price']
-        delta_average_price =  filtered_listing_metrics['average_price'] - global_listing_metrics['average_price']
-        delta_average_rating = filtered_listing_metrics['average_rating'] - global_listing_metrics['average_rating']
-        
+        min_price_delta =  filtered_listing_metrics['min_price'] - global_listing_metrics['min_price']
+        max_price_delta = filtered_listing_metrics['max_price'] - global_listing_metrics['max_price']
+        average_price_delta =  filtered_listing_metrics['average_price'] - global_listing_metrics['average_price']
+        average_rating_delta = filtered_listing_metrics['average_rating'] - global_listing_metrics['average_rating']
+        average_occupancy_delta = filtered_listing_metrics['average_occupancy'] - global_listing_metrics['average_occupancy']
+        average_revenue_delta = filtered_listing_metrics['average_revenue'] - global_listing_metrics['average_revenue']
+
         deltas = {
-            'min_price_delta': delta_min_price,
-            'max_price_delta': delta_max_price,
-            'average_price_delta': delta_average_price,
-            'average_rating_delta': delta_average_rating,
+            'min_price_delta': min_price_delta,
+            'max_price_delta': max_price_delta,
+            'average_price_delta': average_price_delta,
+            'average_rating_delta': average_rating_delta,
+            'average_occupancy_delta': average_occupancy_delta,
+            'average_revenue_delta': average_revenue_delta,
         }
         return deltas
 
@@ -80,6 +91,7 @@ class HostsHelper(UIHelper):
         self.option = option
         self.listings_info = listings_info
 
+    # Loads uniqe host dataframe
     def load_hosts(self):
         return self.data.transform_hosts()
    
@@ -93,10 +105,12 @@ class HostsHelper(UIHelper):
         filtered_hosts = self.get_filtered_hosts()
         return self.processes.get_metrics_for_ward_hosts(filtered_hosts)
 
+    # Gets global host metrics for delta calculations
     def get_global_host_metrics(self):
         hosts = self.load_hosts()
         return self.processes.get_global_host_metrics(hosts)
     
+    # Calculates deltas for currently selected ward
     def get_host_metrics_deltas(self):
         filtered_hosts_metrics = self.get_filtered_host_metrics()
         global_host_metrics = self.get_global_host_metrics()
@@ -113,3 +127,5 @@ class HostsHelper(UIHelper):
             'super_hosts_percent_delta': delta_super_hosts_percent,
         }
         return deltas
+
+   
