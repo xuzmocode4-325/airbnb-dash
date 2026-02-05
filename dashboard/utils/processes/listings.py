@@ -1,58 +1,12 @@
-import re
+
 import pandas as pd
 import plotly.express as px
+from .universal import DashboardProcesses
 
+class ListingsProcesses(DashboardProcesses):
+    def __init__(self):
+        super().__init__()
 
-class DashboardProcesses:
-    """Utility class for dashboard data processing and filtering operations."""
-
-    def _extract_num(self, ward):
-        """Extract numeric ID from ward name string.
-        
-        Args:
-            ward: str, ward name in format 'Ward {num}'
-            
-        Returns:
-            int: ward number or float('inf') if no match found
-        """
-        match = re.search(r'Ward (\d+)', ward)
-        return int(match.group(1)) if match else float('inf')     
-
-    def sort_wards(self, df, column_name):
-        """Returns a sorted list of unique 'Ward {num}' items by extracting and sorting numerically.
-        
-        Args:
-            df: pandas DataFrame
-            column_name: str, name of column containing 'Ward {num}' format
-        
-        Returns:
-            list: sorted wards in format ['Ward 1', 'Ward 2', 'Ward 10', ...]
-        """
-        if df.empty or column_name not in df.columns:
-            return []
-        
-        # Extract unique ward values, filtering out nulls
-        wards = df[column_name].dropna().unique()
-        
-        # Sort numerically by extracted ward number
-        sorted_wards = sorted(wards, key=self._extract_num)
-        return sorted_wards
-    
-    def filter_ward_by_option(self, df, option):
-        """Filter dataframe by ward name option.
-        
-        Args:
-            df: pandas DataFrame with 'name' column
-            option: str or None, ward name to filter by
-            
-        Returns:
-            pandas DataFrame: filtered or original dataframe
-        """
-        if not option or df.empty:
-            return df
-        return df[df['name'] == option]
-    
-    
     def filter_listings_by_ward(self, df, ward_name):
         """Filters the listings DataFrame to include only listings in the specified ward.
         
@@ -71,33 +25,7 @@ class DashboardProcesses:
             return df
         
         return df[df['neighbourhood_id'] == ward_id]
-    
-    def filter_hosts_by_ward(self, df, listings_info, option=None):
-        """Filter hosts dataframe to include only hosts from selected ward.
-        
-        Args:
-            df: pandas DataFrame containing host data
-            listings_info: pandas DataFrame containing listings information
-            option: str or None, ward selection (used to determine if filtering should occur)
-            
-        Returns:
-            pandas DataFrame: filtered or original hosts dataframe
-        """
-        # If no ward is selected or dataframe is empty, return all hosts
-        if not option or df.empty:
-            return df
-        
-        # Extract host IDs from the filtered listings
-        ward_hosts = listings_info['host_id'].unique()
-        
-        # If no hosts found in the ward, return empty dataframe with same structure
-        if len(ward_hosts) == 0:
-            return df[df['host_id'].isin([])]
-        
-        # Filter hosts to only those with listings in the selected ward
-        return df[df['host_id'].isin(ward_hosts)]
 
-    
     def get_metrics_for_ward_listings(self, df):
         """Calculates key metrics for the given ward's listings.
         
@@ -160,66 +88,6 @@ class DashboardProcesses:
         return self.get_metrics_for_ward_listings(df)
     
 
-    def get_metrics_for_ward_hosts(self, df):
-        """Calculate key metrics for hosts in the selected ward.
-        
-        Args:
-            df: pandas DataFrame containing host data
-            
-        Returns:
-            dict: metrics including total hosts, response/acceptance rates, and verification percentages
-        """
-        if df.empty:
-            return {
-                'total_hosts': 0,
-                'mean_response_rate': 0.0,
-                'mean_acceptance_rate': 0.0,
-                'super_hosts_percent': 0.0,
-                'verified_hosts_percent': 0.0
-            }
-        
-        else:
-            total_hosts = df['host_id'].nunique()
-            mean_response_rate = df['host_response_rate'].mean() if 'host_response_rate' in df.columns else 0.0
-            mean_acceptance_rate = df['host_acceptance_rate'].mean() if 'host_acceptance_rate' in df.columns else 0.0
-
-            num_superhosts = df['host_is_superhost'].sum() if 'host_is_superhost' in df.columns else 0
-            #print("Number of superhosts:", num_superhosts)
-            percent_superhosts = (num_superhosts / total_hosts) * 100
-            #print("Percent superhosts:", percent_superhosts)
-            
-            num_verified_hosts = df['host_identity_verified'].sum() if 'host_identity_verified' in df.columns else 0
-            #print("Number of verified hosts:", num_verified_hosts)
-            percent_verified_hosts = (num_verified_hosts / total_hosts) * 100
-            #print("Percent verified hosts:", percent_verified_hosts)
-
-            # Calculate percentages
-            #super_hosts_percent = su
-
-            metrics = {
-                'total_hosts': total_hosts,
-                'mean_response_rate': mean_response_rate,
-                'mean_acceptance_rate': mean_acceptance_rate,
-                'super_hosts_count': num_superhosts,
-                'verified_hosts_count': num_verified_hosts,
-                'super_hosts_percent': percent_superhosts,
-                'verified_hosts_percent': percent_verified_hosts
-            }
-
-            return metrics
-        
-      # Alias for global host metrics
-    def get_global_host_metrics(self, df):
-        """Alias for get_metrics_for_ward_hosts to calculate global host metrics.
-        
-        Args:
-            df: pandas DataFrame containing host data
-            
-        Returns:
-            dict: global host metrics
-        """
-        return self.get_metrics_for_ward_hosts(df)
-
     def get_data_table(self, df):
         """Generate summary table of listings grouped by neighbourhood.
         
@@ -260,7 +128,7 @@ class DashboardProcesses:
         return table
 
 
-    def make_sunburst_chart(self, df):
+    def make_tree_chart(self, df):
         """Display sunburst chart of listings by room and property type.
         
         Args:
@@ -291,6 +159,8 @@ class DashboardProcesses:
             font=dict(color='white', size=14),
             margin=dict(t=50, l=50, r=50, b=50)
         )
+
+        fig.update_coloraxes(colorbar_title_text="Average Annual Revenue")
 
         fig.update_traces(
             marker=dict(
