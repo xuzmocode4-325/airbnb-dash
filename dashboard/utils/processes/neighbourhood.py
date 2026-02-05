@@ -80,7 +80,7 @@ class NeighbourhoodsProcesses(DashboardProcesses):
                 'neutral_reviews_percent': 0.0,
             }
         else: 
-            mode_sentiment = df['sentiment_label'].mode().to_title()
+            mode_sentiment = df['sentiment_label'].mode()
             sentiment_proportions = df['sentiment_label'].value_counts() / len(df)
 
             # Extract each sentiment as a discrete variable
