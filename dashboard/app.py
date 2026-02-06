@@ -42,25 +42,24 @@ def get_host_data(option, filtered_listings):
     host_deltas = hosts_helper.get_host_deltas()
     return host_metrics, global_host_metrics, host_deltas
 
-@st.cache_data
+
 def get_tree_chart(option):
     """Cache sunburst chart for given ward"""
     listings_helper = ListingsHelper(option)
     return listings_helper.show_tree_chart()
 
-@st.cache_data
+
 def get_wordcloud_svg(option):
     """Cache wordcloud SVG for given ward"""
     neighbourhoods_helper = get_neighbourhoods_helper()
     return neighbourhoods_helper.show_neighbourhood_wordcloud(option)
 
-@st.cache_data
+
 def get_data_table(option):
     """Cache listings data table for given ward"""
     listings_helper = ListingsHelper(option)
     return listings_helper.get_data_table()
 
-@st.cache_data
 def process_neighbourhood_overviews(option):
     """Cache processed text data"""
     neighbourhoods_helper = get_neighbourhoods_helper()

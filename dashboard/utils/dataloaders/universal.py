@@ -36,7 +36,7 @@ def load_base_data():
 
 reviews, listings, calendar, wards, contractions = load_base_data()
 
-@st.cache_data
+
 def normalize_data(reviews, listings):
     """Normalize reviews and listings data"""
     normalise_reviews = NormaliseReviews(reviews)
