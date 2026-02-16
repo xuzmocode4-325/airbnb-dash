@@ -25,7 +25,7 @@ from src.normalisers import NormaliseReviews, NormaliseListings
 @st.cache_data
 def load_base_data():
     """Load and return all base data files"""
-    data_dir = project_root / 'data'
+    data_dir = project_root / 'data' / 'raw'
     reviews = pd.read_csv(data_dir / 'reviews.csv.gz')
     listings = pd.read_csv(data_dir / 'listings.csv.gz')
     calendar = pd.read_csv(data_dir / 'calendar.csv.gz')
