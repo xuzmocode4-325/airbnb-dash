@@ -25,11 +25,11 @@ from src.normalisers import NormaliseReviews, NormaliseListings
 @st.cache_data
 def load_base_data():
     """Load and return all base data files"""
-    data_dir = project_root / 'data' / 'raw'
-    reviews = pd.read_csv(data_dir / 'reviews.csv.gz')
-    listings = pd.read_csv(data_dir / 'listings.csv.gz')
-    calendar = pd.read_csv(data_dir / 'calendar.csv.gz')
-    wards = pd.read_csv(data_dir / 'wards.csv')
+    data_dir = project_root / 'data'
+    reviews = pd.read_csv(data_dir / 'raw'/ 'reviews.csv.gz')
+    listings = pd.read_csv(data_dir / 'raw'/ 'listings.csv.gz')
+    calendar = pd.read_csv(data_dir / 'raw'/ 'calendar.csv.gz')
+    wards = pd.read_csv(data_dir / 'raw'/ 'wards.csv')
     with open(data_dir / 'contractions.json') as f:
         contractions = json.load(f)
     return reviews, listings, calendar, wards, contractions
